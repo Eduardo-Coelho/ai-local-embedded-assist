@@ -22,6 +22,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "@types/node-fetch": "^2.6.12",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
@@ -32,12 +33,13 @@
     "vite": "^5.0.10"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@xenova/transformers": "^2.15.0",
     "@tensorflow/tfjs": "^4.15.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.15.0",
     "@tensorflow/tfjs-backend-webgl": "^4.15.0",
-    "@tensorflow/tfjs-backend-cpu": "^4.15.0"
+    "@xenova/transformers": "^2.15.0",
+    "node-fetch": "^3.3.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "build": {
     "appId": "com.ai-local-embedded-assist.app",

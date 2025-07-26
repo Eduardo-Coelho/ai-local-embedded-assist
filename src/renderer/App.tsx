@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
-import { mlClientService, ModelResponse } from './services/MLClientService'
-import { simpleAIService } from './services/SimpleAIService'
+import { httpMLService } from './services/HTTPMLService'
 
 interface AppInfo {
   name: string
@@ -47,15 +46,15 @@ function App() {
       setIsLoadingModel(true)
       setModelProgress(0)
       
-      // Try to load the ML model via IPC
-      await mlClientService.loadModel()
+      // Use HTTP service instead of IPC
+      await httpMLService.loadModel()
       
       // Get model info
-      const info = await mlClientService.getModelInfo()
+      const info = await httpMLService.getModelInfo()
       setModelInfo(info)
       setUsingFallback(false)
       
-      console.log('ML model initialized successfully via IPC')
+      console.log('ML model initialized successfully via HTTP')
     } catch (error) {
       console.error('Failed to initialize ML model:', error)
     } finally {
@@ -71,8 +70,8 @@ function App() {
     setResponse('')
 
     try {
-      let result: ModelResponse;
-      result = await mlClientService.generateResponse(inputText, 256)
+      let result;
+      result = await httpMLService.generateResponse(inputText, 256)
       setResponse(result.text)
     } catch (error) {
       console.error('Error generating response:', error)

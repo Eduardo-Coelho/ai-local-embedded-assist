@@ -1,3 +1,8 @@
+import { spawn, ChildProcess } from 'child_process';
+import * as path from 'path';
+import * as https from 'https';
+import * as http from 'http';
+
 export interface ModelResponse {
   text: string;
   tokens: number;
@@ -11,25 +16,69 @@ export interface ModelInfo {
 }
 
 export class MLService {
-  private model: any = null;
+  private pythonProcess: ChildProcess | null = null;
   private isLoaded = false;
   private isLoading = false;
   private currentModelInfo: { name: string; id: string; size: string } | null = null;
-  private transformers: any = null;
+  private serverUrl = 'http://127.0.0.1:8000';
+  private autoStartEnabled = true;
+  private pythonCommand: string | null = null;
 
   constructor() {
-    // Configure transformers.js to use local models
-    // Force CPU-only mode to avoid GPU issues
-    process.env.WEBGL_CPU_FORWARD = 'true';
-    process.env.WEBGL_DISJOINT_QUERY_TIMER_EXTENSION_RELIABLE = 'false';
-    process.env.WEBGL_FORCE_F16_TEXTURES = 'false';
+    // Handle app shutdown to clean up Python process
+    process.on('exit', () => this.cleanup());
+    process.on('SIGINT', () => this.cleanup());
+    process.on('SIGTERM', () => this.cleanup());
   }
 
-  private async loadTransformers() {
-    if (!this.transformers) {
-      this.transformers = await import('@xenova/transformers');
+  // Method to enable/disable auto-start
+  setAutoStart(enabled: boolean): void {
+    this.autoStartEnabled = enabled;
+  }
+
+  // Method to automatically start the server (called from main.ts)
+  async autoStart(): Promise<void> {
+    if (!this.autoStartEnabled) {
+      console.log('🔄 Auto-start disabled');
+      return;
     }
-    return this.transformers;
+
+    console.log('🚀 Auto-starting Python backend...');
+    try {
+      await this.loadModel();
+      console.log('✅ Python backend auto-started successfully');
+    } catch (error) {
+      console.error('❌ Auto-start failed:', error);
+      // Don't throw error for auto-start failures - let the app continue
+    }
+  }
+
+  private async findPythonCommand(): Promise<string> {
+    const pythonCommands = ['python', 'python3', 'py'];
+    
+    for (const command of pythonCommands) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const testProcess = spawn(command, ['--version']);
+          testProcess.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`Command ${command} failed with code ${code}`));
+            }
+          });
+          testProcess.on('error', () => {
+            reject(new Error(`Command ${command} not found`));
+          });
+        });
+        console.log(`✅ Found Python command: ${command}`);
+        return command;
+      } catch (error) {
+        console.log(`❌ Command ${command} not available: ${error}`);
+      }
+    }
+    
+    throw new Error('Python not found. Please install Python 3.8+ and add it to your PATH');
   }
 
   async loadModel(): Promise<void> {
@@ -40,74 +89,145 @@ export class MLService {
     this.isLoading = true;
     
     try {
-      // Load transformers dynamically
-      const { pipeline } = await this.loadTransformers();
-      
-      // List of models to try in order of preference
-      const modelOptions = [
-        {
-          name: 'DeepSeek Coder 1.3B Base',
-          id: 'deepseek-ai/deepseek-coder-1.3b-base',
-          size: '~2.6GB'
-        },
-        {
-          name: 'TinyLlama 1.1B Chat',
-          id: 'TinyLlama/TinyLlama-1.1B-Chat-v1.0',
-          size: '~2.1GB'
-        },
-        {
-          name: 'Phi-2 Mini',
-          id: 'microsoft/phi-2',
-          size: '~2.7GB'
-        }
-      ];
-
-      for (let i = 0; i < modelOptions.length; i++) {
-        const modelOption = modelOptions[i];
-        try {
-          console.log(`Attempting to load model: ${modelOption.name} (${modelOption.id})`);
-          
-          this.model = await pipeline(
-            'text-generation',
-            modelOption.id,
-            {
-              quantized: true,
-              progress_callback: (progress: any) => {
-                console.log(`Loading progress for ${modelOption.name}: ${Math.round(progress * 100)}%`);
-              },
-              cache_dir: './models',
-              local_files_only: true,
-              revision: 'main'
-            }
-          );
-
-          this.isLoaded = true;
-          console.log(`✅ Successfully loaded: ${modelOption.name}`);
-          
-          // Store the current model info
-          this.currentModelInfo = modelOption;
-          break;
-          
-        } catch (error) {
-          console.error(`❌ Failed to load ${modelOption.name}:`, error);
-          
-          if (i === modelOptions.length - 1) {
-            // This was the last model to try
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to load any model. Last error: ${errorMessage}. Please check your internet connection and try again.`);
-          }
-          
-          console.log(`🔄 Trying next model...`);
-          // Wait a bit before trying the next model
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
+      // Find Python command first
+      if (!this.pythonCommand) {
+        this.pythonCommand = await this.findPythonCommand();
       }
+
+      // Start Python server
+      await this.startPythonServer();
+      
+      // Test the connection
+      await this.testConnection();
+      
+      this.isLoaded = true;
+      this.currentModelInfo = {
+        name: 'DeepSeek Coder 1.3B Base (Python)',
+        id: 'deepseek-ai/deepseek-coder-1.3b-base',
+        size: '~2.6GB'
+      };
+      
+      console.log('✅ Python backend loaded successfully');
     } catch (error) {
-      console.error('Failed to load transformers:', error);
+      console.error('❌ Failed to load Python backend:', error);
       throw error;
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private async startPythonServer(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Path to the external Python server
+      const scriptPath = path.join(process.cwd(), 'python_server.py');
+
+      console.log(`🚀 Starting Python server with command: ${this.pythonCommand}...`);
+      console.log(`📁 Server script: ${scriptPath}`);
+      
+      // Start Python process
+      this.pythonProcess = spawn(this.pythonCommand!, [scriptPath], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd()
+      });
+
+      // Handle Python process events
+      this.pythonProcess.stdout?.on('data', (data) => {
+        console.log('Python:', data.toString());
+      });
+
+      this.pythonProcess.stderr?.on('data', (data) => {
+        console.log('Python Error:', data.toString());
+      });
+
+      this.pythonProcess.on('error', (error) => {
+        console.error('Failed to start Python server:', error);
+        reject(error);
+      });
+
+      this.pythonProcess.on('close', (code) => {
+        console.log(`Python server closed with code ${code}`);
+        this.isLoaded = false;
+      });
+
+      // Wait a bit for server to start
+      setTimeout(() => resolve(), 5000);
+    });
+  }
+
+  private async testConnection(): Promise<void> {
+    const maxRetries = 15; // Increased retries for model loading
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        const response = await this.makeRequest('GET', '/health');
+        if (response.status === 'success' && response.data.model_loaded) {
+          console.log('✅ Python server is ready');
+          return;
+        }
+      } catch (error) {
+        console.log(`Retry ${retries + 1}/${maxRetries}: Server not ready yet...`);
+      }
+      
+      retries++;
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Increased wait time
+    }
+
+    throw new Error('Python server failed to start within timeout');
+  }
+
+  private makeRequest(method: string, endpoint: string, data?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const url = new URL(endpoint, this.serverUrl);
+      const isHttps = url.protocol === 'https:';
+      const client = isHttps ? https : http;
+
+      const options: any = {
+        hostname: url.hostname,
+        port: url.port || (isHttps ? 443 : 80),
+        path: url.pathname,
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      };
+
+      if (data) {
+        const postData = JSON.stringify(data);
+        options.headers['Content-Length'] = Buffer.byteLength(postData);
+      }
+
+      const req = client.request(options, (res) => {
+        let responseData = '';
+
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+
+        res.on('end', () => {
+          try {
+            const parsedData = JSON.parse(responseData);
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              resolve({ status: 'success', data: parsedData });
+            } else {
+              resolve({ status: 'error', data: parsedData });
+            }
+          } catch (error) {
+            reject(new Error('Failed to parse response'));
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        reject(error);
+      });
+
+      if (data) {
+        req.write(JSON.stringify(data));
+      }
+
+      req.end();
+    });
   }
 
   async generateResponse(prompt: string, maxLength: number = 256): Promise<ModelResponse> {
@@ -118,29 +238,24 @@ export class MLService {
     const startTime = Date.now();
     
     try {
-      // Different models might have different parameter names
-      const generationParams = {
-        max_new_tokens: maxLength,
-        temperature: 0.7,
-        top_p: 0.95,
-        do_sample: true,
-        pad_token_id: this.model.tokenizer?.eos_token_id || 0,
-        // Add safety parameters
-        repetition_penalty: 1.1,
-        length_penalty: 1.0
-      };
+      const response = await this.makeRequest('POST', '/generate', { 
+        prompt, 
+        max_length: maxLength 
+      });
 
-      const result = await this.model(prompt, generationParams);
+      if (response.status === 'error') {
+        throw new Error(`Python backend error: ${response.data.detail || 'Unknown error'}`);
+      }
 
+      const data = response.data;
       const endTime = Date.now();
-      const response = result[0].generated_text;
       
       // Extract only the generated part (remove the original prompt)
-      const generatedText = response.substring(prompt.length).trim();
+      const generatedText = data.text.substring(prompt.length).trim();
 
       return {
         text: generatedText || "I couldn't generate a response. Please try again.",
-        tokens: result[0].generated_tokens?.length || 0,
+        tokens: 0, // Python backend doesn't provide token count
         time: endTime - startTime
       };
     } catch (error) {
@@ -162,16 +277,21 @@ export class MLService {
     };
   }
 
-  // Method to unload model and free memory
   async unloadModel(): Promise<void> {
-    if (this.model) {
-      this.model = null;
-      this.isLoaded = false;
-      this.currentModelInfo = null;
-      console.log('Model unloaded');
+    await this.cleanup();
+  }
+
+  private async cleanup(): Promise<void> {
+    if (this.pythonProcess) {
+      console.log('🛑 Stopping Python server...');
+      this.pythonProcess.kill();
+      this.pythonProcess = null;
     }
+    this.isLoaded = false;
+    this.currentModelInfo = null;
+    console.log('Model unloaded');
   }
 }
 
 // Create a singleton instance
-export const mlService = new MLService(); 
+export const mlService = new MLService();
