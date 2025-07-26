@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
-import { deepSeekService, ModelResponse } from './services/DeepSeekService'
+import { mlClientService, ModelResponse } from './services/MLClientService'
 import { simpleAIService } from './services/SimpleAIService'
-import { NetworkDiagnostics, NetworkStatus } from './utils/NetworkDiagnostics'
 
 interface AppInfo {
   name: string
@@ -24,9 +23,7 @@ function App() {
   const [isLoadingModel, setIsLoadingModel] = useState(false)
   const [modelProgress, setModelProgress] = useState(0)
   const [usingFallback, setUsingFallback] = useState(false)
-  const [networkStatus, setNetworkStatus] = useState<NetworkStatus | null>(null)
-  const [showNetworkDiagnostics, setShowNetworkDiagnostics] = useState(false)
-
+ 
   useEffect(() => {
     // Get app information from Electron main process
     const getAppInfo = async () => {
@@ -50,30 +47,17 @@ function App() {
       setIsLoadingModel(true)
       setModelProgress(0)
       
-      // Try to load the DeepSeek model first
-      await deepSeekService.loadModel()
+      // Try to load the ML model via IPC
+      await mlClientService.loadModel()
       
       // Get model info
-      const info = await deepSeekService.getModelInfo()
+      const info = await mlClientService.getModelInfo()
       setModelInfo(info)
       setUsingFallback(false)
       
-      console.log('DeepSeek model initialized successfully')
+      console.log('ML model initialized successfully via IPC')
     } catch (error) {
-      console.error('Failed to initialize DeepSeek model:', error)
-      
-      // Fallback to simple AI service
-      try {
-        console.log('🔄 Falling back to simple AI service...')
-        await simpleAIService.loadModel()
-        const info = await simpleAIService.getModelInfo()
-        setModelInfo(info)
-        setUsingFallback(true)
-        console.log('✅ Simple AI service initialized successfully')
-      } catch (fallbackError) {
-        console.error('❌ Both services failed:', fallbackError)
-        setModelInfo({ name: 'No AI Available', size: '0MB', loaded: false })
-      }
+      console.error('Failed to initialize ML model:', error)
     } finally {
       setIsLoadingModel(false)
     }
@@ -88,30 +72,13 @@ function App() {
 
     try {
       let result: ModelResponse;
-      
-      if (usingFallback) {
-        result = await simpleAIService.generateResponse(inputText, 256)
-      } else {
-        result = await deepSeekService.generateResponse(inputText, 256)
-      }
-      
+      result = await mlClientService.generateResponse(inputText, 256)
       setResponse(result.text)
     } catch (error) {
       console.error('Error generating response:', error)
       setResponse('Sorry, I encountered an error while processing your request. Please try again.')
     } finally {
       setIsProcessing(false)
-    }
-  }
-
-  const runNetworkDiagnostics = async () => {
-    setShowNetworkDiagnostics(true)
-    try {
-      const status = await NetworkDiagnostics.checkNetworkStatus()
-      setNetworkStatus(status)
-      NetworkDiagnostics.logNetworkStatus(status)
-    } catch (error) {
-      console.error('Network diagnostics failed:', error)
     }
   }
 
@@ -126,7 +93,7 @@ function App() {
           <span className={`status-dot ${modelInfo.loaded ? 'online' : 'offline'}`}></span>
           <span>
             {modelInfo.loaded 
-              ? (usingFallback ? 'Simple AI Ready' : 'DeepSeek AI Ready')
+              ? (usingFallback ? 'Simple AI Ready' : 'ML Model Ready')
               : isLoadingModel 
                 ? 'Loading Model...' 
                 : 'Model Not Loaded'
@@ -171,7 +138,7 @@ function App() {
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={modelInfo.loaded ? (usingFallback ? "Ask me anything... (Simple AI mode)" : "Ask DeepSeek AI anything... (Your message will be processed locally)") : "Model is loading, please wait..."}
+                placeholder={modelInfo.loaded ? (usingFallback ? "Ask me anything... (Simple AI mode)" : "Ask AI anything... (Your message will be processed locally)") : "Model is loading, please wait..."}
                 disabled={isProcessing || !modelInfo.loaded || isLoadingModel}
                 rows={3}
                 className="text-input"
@@ -221,29 +188,6 @@ function App() {
             </ul>
           </div>
           
-          <div className="sidebar-section">
-            <h3>Troubleshooting</h3>
-            <button 
-              onClick={runNetworkDiagnostics}
-              className="diagnostic-button"
-              disabled={showNetworkDiagnostics}
-            >
-              {showNetworkDiagnostics ? 'Running Diagnostics...' : '🔍 Run Network Diagnostics'}
-            </button>
-            
-            {networkStatus && (
-              <div className="network-status">
-                <h4>Network Status:</h4>
-                <ul>
-                  {networkStatus.details.map((detail, index) => (
-                    <li key={index} className={detail.includes('✅') ? 'success' : 'error'}>
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
         </div>
       </main>
     </div>

@@ -1,11 +1,17 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import * as path from 'path'
+import { mlService, ModelResponse, ModelInfo } from './MLService'
 
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null
 
 // Disable GPU acceleration to prevent crashes
 app.disableHardwareAcceleration()
+
+
+// Set environment variables for better stability
+process.env.NODE_ENV = 'development';
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 // Handle GPU process crashes gracefully
 app.on('gpu-process-crashed', (event, killed) => {
@@ -91,4 +97,55 @@ ipcMain.handle('get-app-version', () => {
 
 ipcMain.handle('get-app-name', () => {
   return app.getName()
+})
+
+// ML Service IPC handlers
+ipcMain.handle('ml-load-model', async () => {
+  try {
+    await mlService.loadModel()
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to load model:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+})
+
+ipcMain.handle('ml-generate-response', async (event, prompt: string, maxLength: number = 256) => {
+  try {
+    const response = await mlService.generateResponse(prompt, maxLength)
+    return { success: true, response }
+  } catch (error) {
+    console.error('Failed to generate response:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+})
+
+ipcMain.handle('ml-get-model-info', async () => {
+  try {
+    const info = await mlService.getModelInfo()
+    return { success: true, info }
+  } catch (error) {
+    console.error('Failed to get model info:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+})
+
+ipcMain.handle('ml-is-model-ready', async () => {
+  try {
+    const ready = await mlService.isModelReady()
+    return { success: true, ready }
+  } catch (error) {
+    console.error('Failed to check model readiness:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+})
+
+ipcMain.handle('ml-unload-model', async () => {
+  try {
+    await mlService.unloadModel()
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to unload model:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
 }) 

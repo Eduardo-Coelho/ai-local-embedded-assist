@@ -6,7 +6,6 @@
   "homepage": "./",
   "scripts": {
     "download-models": "node download-models.js",
-    "start": "node start-dev.js",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json && electron .",
