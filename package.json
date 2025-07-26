@@ -5,6 +5,8 @@
   "main": "dist/main.js",
   "homepage": "./",
   "scripts": {
+    "download-models": "node download-models.js",
+    "start": "node start-dev.js",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json && electron .",
@@ -32,7 +34,11 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@xenova/transformers": "^2.15.0",
+    "@tensorflow/tfjs": "^4.15.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.15.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.15.0"
   },
   "build": {
     "appId": "com.ai-local-embedded-assist.app",
@@ -42,7 +48,8 @@
     },
     "files": [
       "dist/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "models/**/*"
     ],
     "mac": {
       "category": "public.app-category.productivity"

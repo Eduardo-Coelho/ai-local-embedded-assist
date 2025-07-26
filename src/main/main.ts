@@ -4,6 +4,18 @@ import * as path from 'path'
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null
 
+// Disable GPU acceleration to prevent crashes
+app.disableHardwareAcceleration()
+
+// Handle GPU process crashes gracefully
+app.on('gpu-process-crashed', (event, killed) => {
+  console.log('GPU process crashed:', { killed })
+})
+
+app.on('render-process-gone', (event, webContents, details) => {
+  console.log('Render process gone:', details)
+})
+
 function createWindow(): void {
   // Create the browser window
   mainWindow = new BrowserWindow({
@@ -12,7 +24,14 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      // Disable GPU acceleration for stability
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      // Increase memory limits for model loading
+      backgroundThrottling: false,
+      // Disable experimental features
+      experimentalFeatures: false
     },
     icon: path.join(__dirname, '../assets/icon.png'),
     titleBarStyle: 'default',
@@ -24,7 +43,7 @@ function createWindow(): void {
     mainWindow.loadURL('http://localhost:3000')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'))
   }
 
   // Show window when ready
@@ -35,6 +54,13 @@ function createWindow(): void {
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  // Handle renderer process crashes
+  mainWindow.webContents.on('crashed', (event, killed) => {
+    console.log('Renderer process crashed:', { killed })
+    // Optionally reload the window
+    // mainWindow?.reload()
   })
 }
 
