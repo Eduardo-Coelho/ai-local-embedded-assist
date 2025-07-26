@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { httpMLService, ModelInfo } from "../../services/HTTPMLService";
-
+import { formatResponse, renderFormattedResponse, FormattedResponse } from "../../utils/ResponseFormatter";
 
 
 interface ChatContainerProps {
@@ -19,7 +19,7 @@ export const ChatContainer = ({
 }: ChatContainerProps) => {
     const [inputText, setInputText] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
-    const [response, setResponse] = useState("");
+    const [formattedResponse, setFormattedResponse] = useState<FormattedResponse | null>(null);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,17 +27,31 @@ export const ChatContainer = ({
         if (!inputText.trim() || !modelInfo.loaded) return;
     
         setIsProcessing(true);
-        setResponse("");
+        setFormattedResponse(null);
     
         try {
           let result;
-          result = await httpMLService.generateResponse(inputText, 256);
-          setResponse(result.text);
+          console.log("inputText:", inputText);
+          result = await httpMLService.generateResponse(inputText, 1024); // Increased from 256
+          console.log("result:", result);
+          
+          // Add validation for the response
+          if (!result || !result.text) {
+            throw new Error("Invalid response from model");
+          }
+          
+          // Format the response
+          const formatted = formatResponse(result.text);
+          console.log("formatted:", formatted);
+          setFormattedResponse(formatted);
+
         } catch (error) {
           console.error("Error generating response:", error);
-          setResponse(
-            "Sorry, I encountered an error while processing your request. Please try again."
-          );
+          setFormattedResponse({
+            text: "Sorry, I encountered an error while processing your request. Please try again.",
+            hasCode: false,
+            codeBlocks: []
+          });
         } finally {
           setIsProcessing(false);
         }
@@ -75,10 +89,10 @@ export const ChatContainer = ({
             </div>
           )}
 
-          {response && (
+          {formattedResponse && (
             <div className="message ai-message">
               <div className="message-content">
-                <p>{response}</p>
+                {renderFormattedResponse(formattedResponse)}
               </div>
             </div>
           )}

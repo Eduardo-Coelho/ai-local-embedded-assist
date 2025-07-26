@@ -29,8 +29,8 @@ export class HTTPMLService {
         this.isLoaded = data.model_loaded || false;
         if (this.isLoaded) {
           this.currentModelInfo = {
-            name: 'DeepSeek Coder 1.3B Base (Python)',
-            size: '~2.6GB',
+            name: 'TinyLlama 1.1B Chat',
+            size: '~2.1GB',
             loaded: true
           };
         }
@@ -64,8 +64,8 @@ export class HTTPMLService {
       
       this.isLoaded = true;
       this.currentModelInfo = {
-        name: 'DeepSeek Coder 1.3B Base (Python)',
-        size: '~2.6GB',
+        name: 'TinyLlama 1.1B Chat',
+        size: '~2.1GB',
         loaded: true
       };
       
@@ -103,7 +103,7 @@ export class HTTPMLService {
     throw new Error('Python server failed to start within timeout');
   }
 
-  async generateResponse(prompt: string, maxLength: number = 256): Promise<ModelResponse> {
+  async generateResponse(prompt: string, maxLength: number = 1024): Promise<ModelResponse> {
     if (!this.isLoaded) {
       throw new Error('Model not loaded. Call loadModel() first.');
     }
@@ -130,11 +130,9 @@ export class HTTPMLService {
       const data = await response.json();
       const endTime = Date.now();
       
-      // Extract only the generated part (remove the original prompt)
-      const generatedText = data.text.substring(prompt.length).trim();
-
+      // Return the full generated text - let the formatter handle cleaning
       return {
-        text: generatedText || "I couldn't generate a response. Please try again.",
+        text: data.text || "I couldn't generate a response. Please try again.",
         tokens: 0, // Python backend doesn't provide token count
         time: endTime - startTime
       };

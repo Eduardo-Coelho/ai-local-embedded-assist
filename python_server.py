@@ -14,7 +14,7 @@ generator = None
 
 class PromptRequest(BaseModel):
     prompt: str
-    max_length: int = 256
+    max_length: int = 1024
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,7 +22,8 @@ async def lifespan(app: FastAPI):
     global generator
     try:
         print("Loading model...")
-        model_id = "deepseek-ai/deepseek-coder-1.3b-base"
+        # Use TinyLlama for lightweight embedded performance
+        model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir="./models")
         model = AutoModelForCausalLM.from_pretrained(
             model_id, 
@@ -66,17 +67,73 @@ async def generate_text(request: PromptRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
+        # TinyLlama uses a specific chat format
+        formatted_prompt = f"<|system|>\nYou are a helpful AI assistant.\n<|user|>\n{request.prompt}\n<|assistant|>\n"
+        
         result = generator(
-            request.prompt, 
+            formatted_prompt, 
             max_new_tokens=request.max_length,
             do_sample=True,
             temperature=0.7,
             top_p=0.95,
-            repetition_penalty=1.1
+            repetition_penalty=1.1,
+            pad_token_id=generator.tokenizer.eos_token_id,
+            eos_token_id=generator.tokenizer.eos_token_id
         )
-        return {"text": result[0]["generated_text"]}
+        
+        generated_text = result[0]["generated_text"]
+        
+        # Clean up the response - extract only the assistant's response
+        if "<|assistant|>" in generated_text:
+            # Extract only the assistant part
+            assistant_start = generated_text.find("<|assistant|>") + len("<|assistant|>")
+            answer = generated_text[assistant_start:].strip()
+            
+            # Remove any trailing system/user tags
+            if "<|system|>" in answer:
+                answer = answer.split("<|system|>")[0].strip()
+            if "<|user|>" in answer:
+                answer = answer.split("<|user|>")[0].strip()
+        else:
+            # Fallback: try to remove the original prompt
+            if request.prompt in generated_text:
+                answer = generated_text.replace(request.prompt, "").strip()
+            else:
+                answer = generated_text.strip()
+        
+        # Clean up any trailing incomplete sentences or HTML-like content
+        answer = clean_response(answer)
+        
+        return {"text": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def clean_response(text: str) -> str:
+    """Clean up the response text"""
+    # Remove HTML tags
+    import re
+    text = re.sub(r'</?[^>]+(>|$)', '', text)
+    
+    # Remove TinyLlama specific tokens
+    text = re.sub(r'<\|[^>]+\|>', '', text)
+    
+    # Remove common incomplete endings
+    text = re.sub(r'</div>.*$', '', text, flags=re.DOTALL)
+    text = re.sub(r'</body>.*$', '', text, flags=re.DOTALL)
+    text = re.sub(r'</html>.*$', '', text, flags=re.DOTALL)
+    
+    # Clean up multiple newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Remove trailing incomplete sentences
+    lines = text.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        line = line.strip()
+        if line and not line.endswith('...') and len(line) > 5:  # Reduced minimum length for TinyLlama
+            cleaned_lines.append(line)
+    
+    return '\n'.join(cleaned_lines).strip()
 
 @app.get("/health")
 async def health_check():
