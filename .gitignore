@@ -113,6 +113,7 @@ models/
 *.bin
 *.onnx
 *.tflite
+.npm-cache
 
 # Local development
 .local/ 

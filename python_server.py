@@ -24,17 +24,57 @@ async def lifespan(app: FastAPI):
         print("Loading model...")
         # Use TinyLlama for lightweight embedded performance
         model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir="./models")
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id, 
-            cache_dir="./models",
-            torch_dtype=torch.float16,
-            device_map="auto"
-        )
+        
+        # Check if model is already downloaded locally
+        import os
+        model_path = "./models"
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+            print("Models directory created. First run will download the model.")
+        
+        # Check if we have the model files locally
+        model_cache_path = os.path.join(model_path, "models--TinyLlama--TinyLlama-1.1B-Chat-v1.0")
+        has_local_model = os.path.exists(model_cache_path)
+        
+        if has_local_model:
+            print("Using locally cached model...")
+            # Force local files only when offline
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_id, 
+                cache_dir="./models",
+                local_files_only=True  # Force offline mode
+            )
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id, 
+                cache_dir="./models",
+                torch_dtype=torch.float16,
+                device_map="auto",
+                local_files_only=True  # Force offline mode
+            )
+        else:
+            print("Downloading model (requires internet connection)...")
+            # Allow downloading if not cached
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_id, 
+                cache_dir="./models",
+                local_files_only=False
+            )
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id, 
+                cache_dir="./models",
+                torch_dtype=torch.float16,
+                device_map="auto",
+                local_files_only=False
+            )
+        
         generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
         print("Model loaded successfully!")
     except Exception as e:
         print(f"Error loading model: {e}")
+        if "local_files_only" in str(e):
+            print("Model not found locally. Please run with internet connection first to download the model.")
+        else:
+            print("Make sure you have an internet connection for the first run to download the model.")
         raise e
     
     yield
@@ -54,6 +94,10 @@ app.add_middleware(
         "http://127.0.0.1:5173",  # Alternative Vite port
         "http://localhost:8080",  # Alternative dev port
         "http://127.0.0.1:8080",  # Alternative dev port
+        "http://localhost:8000",  # Python server port
+        "http://127.0.0.1:8000",  # Alternative Python server port
+        "file://*",  # Allow file:// protocol for Electron
+        "*"  # Temporarily allow all origins for debugging
     ],
     allow_credentials=True,
     allow_methods=["*"],

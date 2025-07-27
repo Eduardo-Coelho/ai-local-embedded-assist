@@ -5,17 +5,18 @@
   "main": "dist/main.js",
   "homepage": "./",
   "scripts": {
-    "download-models": "node download-models.js",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json && electron .",
     "build": "npm run build:renderer && npm run build:main",
+    "copy-assets": "cp python_server.py dist/ && cp -r models dist/",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux",
+    "dist:win:fast": "npm run build && electron-builder --win --config.compression=store",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "eduardo-coelho",
@@ -49,14 +50,32 @@
     },
     "files": [
       "dist/**/*",
-      "node_modules/**/*",
-      "models/**/*"
+      "models/**/*",
+      "python_server.py"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/@tensorflow/tfjs-backend-cpu/dist/",
+        "to": "tfjs-backend-cpu/",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules/@tensorflow/tfjs-backend-webgl/dist/",
+        "to": "tfjs-backend-webgl/",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules/@xenova/transformers/dist/",
+        "to": "transformers/",
+        "filter": ["**/*"]
+      }
     ],
     "mac": {
       "category": "public.app-category.productivity"
     },
     "win": {
-      "target": "nsis"
+      "target": "portable",
+      "forceCodeSigning": false
     },
     "linux": {
       "target": "AppImage"
