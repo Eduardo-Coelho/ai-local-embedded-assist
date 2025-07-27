@@ -1,13 +1,13 @@
 
 
-interface SidebarInformationProps {
+interface SidebarProps {
     modelName: string;
     modelSize: string;
     modelStatus: boolean;
    
 }
 
-export const SidebarInformation = ({modelName, modelSize, modelStatus}: SidebarInformationProps) => {
+export const Sidebar = ({modelName, modelSize, modelStatus}: SidebarProps) => {
     return (
         <div className="sidebar">
         <div className="sidebar-section">

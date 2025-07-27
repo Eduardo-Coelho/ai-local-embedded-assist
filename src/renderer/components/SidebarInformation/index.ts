@@ -1,1 +1,0 @@
-export { SidebarInformation } from './SidebarInformation';

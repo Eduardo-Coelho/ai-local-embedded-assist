@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { httpMLService } from "./services/HTTPMLService";
-import { SidebarInformation } from "./components/SidebarInformation";
+import { Sidebar } from "./components/Sidebar";
 import { ChatContainer } from "./components/ChatContainer";
 
 interface AppInfo {
@@ -27,7 +27,6 @@ function App() {
   const [modelProgress, setModelProgress] = useState(0);
 
   useEffect(() => {
-    // Get app information from Electron main process
     const getAppInfo = async () => {
       try {
         const windowVar: any = window;
@@ -39,7 +38,6 @@ function App() {
         setAppInfo({ name: "AI Local Embedded Assistant", version: "1.0.0" });
       }
     };
-
     getAppInfo();
     initializeModel();
   }, []);
@@ -91,7 +89,7 @@ function App() {
           usingFallback={usingFallback}
           modelInfo={modelInfo}
         />
-        <SidebarInformation
+        <Sidebar
           modelName={modelInfo.name}
           modelSize={modelInfo.size}
           modelStatus={modelInfo.loaded}
