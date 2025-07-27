@@ -12,6 +12,9 @@ from contextlib import asynccontextmanager
 # Global model variable
 generator = None
 
+modelName = "models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"
+model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
 class PromptRequest(BaseModel):
     prompt: str
     max_length: int = 1024
@@ -23,7 +26,6 @@ async def lifespan(app: FastAPI):
     try:
         print("Loading model...")
         # Use TinyLlama for lightweight embedded performance
-        model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         
         # Check if model is already downloaded locally
         import os
@@ -33,7 +35,7 @@ async def lifespan(app: FastAPI):
             print("Models directory created. First run will download the model.")
         
         # Check if we have the model files locally
-        model_cache_path = os.path.join(model_path, "models--TinyLlama--TinyLlama-1.1B-Chat-v1.0")
+        model_cache_path = os.path.join(model_path, modelName)
         has_local_model = os.path.exists(model_cache_path)
         
         if has_local_model:

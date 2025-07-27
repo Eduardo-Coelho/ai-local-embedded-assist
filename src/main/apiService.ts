@@ -15,7 +15,7 @@ export interface ModelInfo {
   loaded: boolean;
 }
 
-export class MLService {
+export class ApiService {
   private pythonProcess: ChildProcess | null = null;
   private isLoaded = false;
   private isLoading = false;
@@ -293,5 +293,4 @@ export class MLService {
   }
 }
 
-// Create a singleton instance
-export const mlService = new MLService();
+export const apiService = new ApiService();

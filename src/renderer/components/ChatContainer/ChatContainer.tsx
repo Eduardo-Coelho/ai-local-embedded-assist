@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { httpMLService, ModelInfo } from "../../services/HTTPMLService";
-import { formatResponse, renderFormattedResponse, FormattedResponse } from "../../utils/ResponseFormatter";
+import { httpMLService } from "../../services/HTTPMLService";
+import { renderFormattedResponse, renderFormattedResponseWithSyntaxHighlighting } from "../../utils/ResponseFormatter";
+import { ModelInfo, ModelResponse } from "../../types";
 
 
 interface ChatContainerProps {
@@ -19,7 +20,7 @@ export const ChatContainer = ({
 }: ChatContainerProps) => {
     const [inputText, setInputText] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
-    const [formattedResponse, setFormattedResponse] = useState<FormattedResponse | null>(null);
+    const [formattedResponse, setFormattedResponse] = useState<ModelResponse | null>(null);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -30,9 +31,8 @@ export const ChatContainer = ({
         setFormattedResponse(null);
     
         try {
-          let result;
           console.log("inputText:", inputText);
-          result = await httpMLService.generateResponse(inputText, 1024); // Increased from 256
+          const result = await httpMLService.generateResponse(inputText, 1024); // Increased from 256
           console.log("result:", result);
           
           // Add validation for the response
@@ -40,17 +40,14 @@ export const ChatContainer = ({
             throw new Error("Invalid response from model");
           }
           
-          // Format the response
-          const formatted = formatResponse(result.text);
-          console.log("formatted:", formatted);
-          setFormattedResponse(formatted);
+          setFormattedResponse(result);
 
         } catch (error) {
           console.error("Error generating response:", error);
           setFormattedResponse({
             text: "Sorry, I encountered an error while processing your request. Please try again.",
-            hasCode: false,
-            codeBlocks: []
+            tokens: 0,
+            time: 0
           });
         } finally {
           setIsProcessing(false);
@@ -92,7 +89,9 @@ export const ChatContainer = ({
           {formattedResponse && (
             <div className="message ai-message">
               <div className="message-content">
-                {renderFormattedResponse(formattedResponse)}
+                <div className="response-container">
+                  {renderFormattedResponseWithSyntaxHighlighting(formattedResponse)}
+                </div>
               </div>
             </div>
           )}

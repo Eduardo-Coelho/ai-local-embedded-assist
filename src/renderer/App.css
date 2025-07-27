@@ -524,3 +524,134 @@
   color: #b0b0b0;
   font-style: italic;
 } 
+
+/* Code Block Styling */
+.code-block-wrapper {
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f1f3f4;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.code-block-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot.red { background: #ff5f56; }
+.dot.yellow { background: #ffbd2e; }
+.dot.green { background: #27ca3f; }
+
+.code-block-title {
+  font-size: 12px;
+  color: #586069;
+  font-weight: 500;
+}
+
+.code-block-content {
+  padding: 0;
+}
+
+.code-block {
+  margin: 0;
+  padding: 16px;
+  background: transparent;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #ffffff;
+  overflow-x: auto;
+}
+
+.code-block code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+/* Text Content Styling */
+.text-content {
+  line-height: 1.6;
+  color: #ffffff;
+}
+
+.text-line {
+  margin: 0.5rem 0;
+}
+
+.numbered-list-item {
+  display: flex;
+  margin: 0.5rem 0;
+  gap: 8px;
+}
+
+.list-number {
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 20px;
+}
+
+.list-content {
+  flex: 1;
+}
+
+.bullet-list-item {
+  display: flex;
+  margin: 0.5rem 0;
+  gap: 8px;
+}
+
+.bullet {
+  color: #ffffff;
+  font-weight: bold;
+  min-width: 12px;
+}
+
+/* Response container styling */
+.response-container {
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+} 
+
+/* Clickable Link Styling */
+.clickable-link {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.clickable-link:hover {
+  color: #ffffff;
+  text-decoration: none;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+}
+
+.clickable-link:visited {
+  color: #551a8b;
+}
+
+.clickable-link:active {
+  color: #003d66;
+} 

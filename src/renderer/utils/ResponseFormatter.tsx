@@ -1,137 +1,140 @@
-export interface FormattedResponse {
-  text: string;
-  hasCode: boolean;
-  codeBlocks: CodeBlock[];
-}
+import { ModelResponse } from "../types";
 
-export interface CodeBlock {
-  language: string;
-  code: string;
-}
-
-export function formatResponse(rawResponse: string): FormattedResponse {
-  // Clean up the response first
-  let cleanedResponse = rawResponse
-    .replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
-    .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double newlines
-    .trim();
-
-  // If the response seems incomplete or malformed, try to clean it up
-  if (cleanedResponse.includes('</div>') || cleanedResponse.includes('</body>')) {
-    // Remove any trailing HTML-like content
-    cleanedResponse = cleanedResponse.replace(/<\/div>.*$/, '');
-    cleanedResponse = cleanedResponse.replace(/<\/body>.*$/, '');
-  }
-
-  // Handle the specific formatting issues from your response
-  // Split on common question/answer patterns
-  cleanedResponse = cleanedResponse.replace(/(###\s*[^#\n]+)/g, '\n\n$1\n\n');
-  cleanedResponse = cleanedResponse.replace(/(Question:\s*[^\n]+)/g, '\n\n**$1**\n\n');
-  cleanedResponse = cleanedResponse.replace(/(Answer:\s*[^\n]+)/g, '\n\n$1\n\n');
+export function renderFormattedResponse(response: ModelResponse): JSX.Element[] {
+  // Handle the response structure with text, tokens, and time
+  const text = typeof response === 'string' ? response : response.text;
   
-  // Handle bullet points and lists
-  cleanedResponse = cleanedResponse.replace(/(\s*[-*]\s*[^\n]+)/g, '\n$1');
-  
-  // Handle code snippets
-  cleanedResponse = cleanedResponse.replace(/(`[^`]+`)/g, '\n$1\n');
-  
-  // Clean up multiple newlines again
-  cleanedResponse = cleanedResponse.replace(/\n{3,}/g, '\n\n');
-
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  const codeBlocks: CodeBlock[] = [];
-  let formattedText = cleanedResponse;
-  let blockIndex = 0;
-
-  // Extract code blocks and replace with placeholders
-  formattedText = formattedText.replace(codeBlockRegex, (match, language, code) => {
-    const lang = language || 'text';
-    codeBlocks.push({
-      language: lang,
-      code: code.trim()
-    });
-    return `[CODE_BLOCK_${blockIndex++}]`;
-  });
-
-  return {
-    text: formattedText,
-    hasCode: codeBlocks.length > 0,
-    codeBlocks
-  };
-}
-
-export function renderFormattedResponse(response: FormattedResponse): JSX.Element[] {
-  const elements: JSX.Element[] = [];
-  const parts = response.text.split(/(\[CODE_BLOCK_\d+\])/);
-
-  parts.forEach((part, index) => {
-    if (part.startsWith('[CODE_BLOCK_') && part.endsWith(']')) {
-      const blockIndex = parseInt(part.match(/\d+/)?.[0] || '0');
-      const codeBlock = response.codeBlocks[blockIndex];
-      
-      if (codeBlock) {
-        elements.push(
-          <pre key={`code-${index}`} className="code-block">
-            <div className="code-header">
-              <span className="code-language">{codeBlock.language}</span>
+  // Split by code block markers and process each part
+  return text.split(/(\[CODE_BLOCK_\d+\])/).map((part, index) => {
+    if (part.startsWith("[CODE_BLOCK_")) {
+      // Extract the code block number
+      const blockMatch = part.match(/\[CODE_BLOCK_(\d+)\]/);
+      if (blockMatch) {
+        const blockNumber = blockMatch[1];
+        // You might want to store code blocks in a separate structure
+        // For now, we'll render it as a styled code block
+        return (
+          <div key={index} className="code-block-container">
+            <div className="code-block-header">
+              <span className="code-block-title">Code Block {blockNumber}</span>
             </div>
-            <code>{codeBlock.code}</code>
-          </pre>
+            <pre className="code-block">
+              <code>{part}</code>
+            </pre>
+          </div>
         );
       }
-    } else if (part.trim()) {
-      // Split by double newlines to create paragraphs
-      const paragraphs = part.split('\n\n').filter(p => p.trim());
-      paragraphs.forEach((paragraph, pIndex) => {
-        // Check if this is a heading (starts with ###)
-        if (paragraph.startsWith('###')) {
-          const headingText = paragraph.replace(/^###\s*/, '');
-          elements.push(
-            <h3 key={`heading-${index}-${pIndex}`} className="response-heading">
-              {headingText}
-            </h3>
-          );
-        }
-        // Check if this is a question (starts with **Question:)
-        else if (paragraph.startsWith('**Question:')) {
-          const questionText = paragraph.replace(/^\*\*Question:\s*/, '').replace(/\*\*$/, '');
-          elements.push(
-            <div key={`question-${index}-${pIndex}`} className="question-block">
-              <strong>Question:</strong> {questionText}
-            </div>
-          );
-        }
-        // Check if this is an answer (starts with Answer:)
-        else if (paragraph.startsWith('Answer:')) {
-          const answerText = paragraph.replace(/^Answer:\s*/, '');
-          elements.push(
-            <div key={`answer-${index}-${pIndex}`} className="answer-block">
-              <strong>Answer:</strong> {answerText}
-            </div>
-          );
-        }
-        // Check if this looks like a list item
-        else if (paragraph.match(/^\s*[-*]\s+/)) {
-          const listItems = paragraph.split('\n').filter(item => item.trim());
-          elements.push(
-            <ul key={`list-${index}-${pIndex}`} className="response-list">
-              {listItems.map((item, itemIndex) => (
-                <li key={itemIndex}>{item.replace(/^\s*[-*]\s+/, '')}</li>
-              ))}
-            </ul>
-          );
-        }
-        // Regular paragraph
-        else {
-          elements.push(
-            <p key={`text-${index}-${pIndex}`} className="response-paragraph">
-              {paragraph}
-            </p>
-          );
-        }
-      });
     }
+    
+    // Handle regular text with line breaks and clickable links
+    return (
+      <span key={index} className="text-content">
+        {part.split('\n').map((line, lineIndex) => (
+          <span key={lineIndex}>
+            {renderTextWithLinks(line)}
+            {lineIndex < part.split('\n').length - 1 && <br />}
+          </span>
+        ))}
+      </span>
+    );
   });
+}
 
-  return elements;
+// Function to render text with clickable links
+function renderTextWithLinks(text: string): JSX.Element[] {
+  // URL regex pattern to match various types of URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="clickable-link"
+          onClick={(e) => {
+            e.preventDefault();
+            // Open link in default browser
+            window.open(part, '_blank');
+          }}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
+// Alternative function for more advanced code formatting
+export function renderFormattedResponseWithSyntaxHighlighting(response: ModelResponse): JSX.Element[] {
+  const text = typeof response === 'string' ? response : response.text;
+  
+  return text.split(/(\[CODE_BLOCK_\d+\])/).map((part, index) => {
+    if (part.startsWith("[CODE_BLOCK_")) {
+      const blockMatch = part.match(/\[CODE_BLOCK_(\d+)\]/);
+      if (blockMatch) {
+        const blockNumber = blockMatch[1];
+        return (
+          <div key={index} className="code-block-wrapper">
+            <div className="code-block-header">
+              <div className="code-block-dots">
+                <span className="dot red"></span>
+                <span className="dot yellow"></span>
+                <span className="dot green"></span>
+              </div>
+              <span className="code-block-title">Code Block {blockNumber}</span>
+            </div>
+            <div className="code-block-content">
+              <pre className="code-block">
+                <code>{part}</code>
+              </pre>
+            </div>
+          </div>
+        );
+      }
+    }
+    
+    // Handle regular text with proper formatting and clickable links
+    return (
+      <div key={index} className="text-content">
+        {part.split('\n').map((line, lineIndex) => {
+          // Handle numbered lists
+          const numberedListMatch = line.match(/^(\d+)\.\s+(.+)$/);
+          if (numberedListMatch) {
+            return (
+              <div key={lineIndex} className="numbered-list-item">
+                <span className="list-number">{numberedListMatch[1]}.</span>
+                <span className="list-content">
+                  {renderTextWithLinks(numberedListMatch[2])}
+                </span>
+              </div>
+            );
+          }
+          
+          // Handle bullet points
+          if (line.trim().startsWith('-') || line.trim().startsWith('•')) {
+            return (
+              <div key={lineIndex} className="bullet-list-item">
+                <span className="bullet">•</span>
+                <span className="list-content">
+                  {renderTextWithLinks(line.trim().substring(1).trim())}
+                </span>
+              </div>
+            );
+          }
+          
+          // Regular text with clickable links
+          return (
+            <div key={lineIndex} className="text-line">
+              {line ? renderTextWithLinks(line) : '\u00A0'} {/* Use non-breaking space for empty lines */}
+            </div>
+          );
+        })}
+      </div>
+    );
+  });
 }

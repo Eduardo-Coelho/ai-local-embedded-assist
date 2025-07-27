@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import * as path from 'path'
-import { mlService } from './MLService'
+import { apiService } from './apiService'
 
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null
@@ -75,7 +75,7 @@ app.whenReady().then(async () => {
   
   // Auto-start Python backend (keep this)
   console.log('🚀 Starting application...')
-  await mlService.autoStart()
+  await apiService.autoStart()
 })
 
 // Quit when all windows are closed

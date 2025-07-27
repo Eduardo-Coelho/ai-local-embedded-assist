@@ -1,14 +1,4 @@
-export interface ModelResponse {
-  text: string;
-  tokens: number;
-  time: number;
-}
-
-export interface ModelInfo {
-  name: string;
-  size: string;
-  loaded: boolean;
-}
+import { ModelInfo, ModelResponse } from "../types";
 
 export class HTTPMLService {
   private serverUrl = 'http://127.0.0.1:8000';
