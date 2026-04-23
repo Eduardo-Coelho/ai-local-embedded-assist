@@ -1,4 +1,4 @@
-# AI Local Embedded Assistant
+# AI Local Embedded Assistant (Beta)
 
 A modern Electron application built with React and TypeScript that provides a local AI assistant interface. This app is designed to run lightweight NLP models locally on your device, ensuring privacy and offline capability.
 
@@ -79,6 +79,4 @@ The application is designed to integrate with local AI models. Here's how to add
 
 3. **Local Inference**: Use a JavaScript library like TensorFlow.js to load the model and perform inference directly within the app.
 
-```
-
-```
+<img src="./IMG/UI.png" width="400" height="400">
