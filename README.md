@@ -7,9 +7,8 @@ A modern Electron application built with React and TypeScript that provides a lo
 - 🚀 **Local AI Processing** - Runs AI models directly on your device
 - 🔒 **Privacy Focused** - No data sent to external servers
 - 📱 **Offline Capability** - Works without internet connection
-- ⚡ **Fast Response** - Optimized for quick local inference
-- 🎨 **Modern UI** - Beautiful, responsive interface
-- 🔧 **TypeScript** - Full type safety and better development experience
+
+<img src="./IMG/UI.png" width="400" height="400">
 
 ## Prerequisites
 
@@ -78,5 +77,3 @@ The application is designed to integrate with local AI models. Here's how to add
 2. **Packaging the Model**: Include the model files within your Electron application's directory. This way, the model is always available for offline use.
 
 3. **Local Inference**: Use a JavaScript library like TensorFlow.js to load the model and perform inference directly within the app.
-
-<img src="./IMG/UI.png" width="400" height="400">
