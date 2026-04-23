@@ -11,30 +11,25 @@ A modern Electron application built with React and TypeScript that provides a lo
 - 🎨 **Modern UI** - Beautiful, responsive interface
 - 🔧 **TypeScript** - Full type safety and better development experience
 
-## Tech Stack
-
-- **Electron** - Cross-platform desktop application framework
-- **React** - User interface library
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Fast build tool and development server
-- **TensorFlow.js** - Local AI model inference (ready for integration)
-
 ## Prerequisites
 
 - Node.js (v16 or higher)
+- pip (Python)
+
 - npm or yarn package manager
 
 ## Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd ai-local-embedded-assist
-   ```
+1. **Install dependencies**
 
-2. **Install dependencies**
    ```bash
    npm install
+   ```
+
+2. **Install Python dependencies**
+
+   ```bash
+   npm run install-python-deps
    ```
 
 3. **Start development server**
@@ -84,54 +79,6 @@ The application is designed to integrate with local AI models. Here's how to add
 
 3. **Local Inference**: Use a JavaScript library like TensorFlow.js to load the model and perform inference directly within the app.
 
-### Example Integration
-
-```typescript
-// In your AI service file
-import * as tf from '@tensorflow/tfjs';
-
-export class AIService {
-  private model: tf.LayersModel | null = null;
-
-  async loadModel() {
-    // Load your model here
-    this.model = await tf.loadLayersModel('path/to/your/model.json');
-  }
-
-  async processInput(input: string) {
-    if (!this.model) {
-      throw new Error('Model not loaded');
-    }
-    
-    // Process input with your model
-    // Return the response
-  }
-}
 ```
 
-## Development
-
-### Development Mode
-The development mode runs both the Vite dev server for the React app and the Electron main process with hot reloading.
-
-### Building for Production
-The build process compiles TypeScript files and bundles the React application for production.
-
-### Packaging
-Use electron-builder to create distributable packages for different platforms.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-ISC License
-
-## Support
-
-For support and questions, please open an issue in the repository.
+```
