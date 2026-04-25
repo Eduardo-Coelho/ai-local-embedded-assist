@@ -8,7 +8,7 @@ A modern Electron application built with React and TypeScript that provides a lo
 - 🔒 **Privacy Focused** - No data sent to external servers
 - 📱 **Offline Capability** - Works without internet connection
 
-<img src="./IMG/UI.png" width="400" height="400">
+<img src="./IMG/UI.png" width="400" height="500">
 
 ## Prerequisites
 
