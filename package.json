@@ -22,7 +22,7 @@
   "author": "eduardo-coelho",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.19.39",
     "@types/node-fetch": "^2.6.12",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
