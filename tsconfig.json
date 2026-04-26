@@ -19,6 +19,6 @@
   "include": ["src/renderer"],
   "references": [
     { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.main.json" } // ← add this line
+    { "path": "./tsconfig.main.json" }
   ]
 }
