@@ -53,7 +53,7 @@ ai-local-embedded-assist/
 │   ├── main/           # Electron main process
 │   │   ├── main.ts     # Main process entry point
 │   │   └── preload.ts  # Preload script for security
-│   └── renderer/       # React renderer process
+│   └── ui/             # React ui process
 │       ├── main.tsx    # React entry point
 │       ├── App.tsx     # Main App component
 │       ├── App.css     # Component styles
@@ -62,7 +62,7 @@ ai-local-embedded-assist/
 ├── release/            # Packaged applications
 ├── index.html          # HTML entry point
 ├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript config (renderer)
+├── tsconfig.json       # TypeScript config (ui)
 ├── tsconfig.main.json  # TypeScript config (main)
 ├── tsconfig.node.json  # TypeScript config (Node.js tools)
 └── vite.config.ts      # Vite configuration
