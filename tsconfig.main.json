@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // need to investigate why setting the composite to true, mess up with the dist build
+    "composite": false,
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
