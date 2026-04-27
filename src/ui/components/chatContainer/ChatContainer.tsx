@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { renderFormattedResponseWithSyntaxHighlighting } from '../../utils/ResponseFormatter';
 import { AIServiceInit, AIModelInfo, AIModelResponse } from '../../services';
+import { FormatResponse } from '..';
 
-interface ChatContainerProps {
+type ChatContainerProps = {
   modelProgress: number;
   isLoadingModel: boolean;
   usingFallback: boolean;
   modelInfo: AIModelInfo;
-}
+};
 
 export const ChatContainer = ({
   modelProgress,
@@ -84,9 +84,7 @@ export const ChatContainer = ({
           <div className="message ai-message">
             <div className="message-content">
               <div className="response-container">
-                {renderFormattedResponseWithSyntaxHighlighting(
-                  formattedResponse,
-                )}
+                <FormatResponse response={formattedResponse} />
               </div>
             </div>
           </div>

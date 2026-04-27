@@ -1,8 +1,8 @@
-interface SidebarProps {
+type SidebarProps = {
   modelName: string;
   modelSize: string;
   modelStatus: boolean;
-}
+};
 
 export const Sidebar = ({
   modelName,
