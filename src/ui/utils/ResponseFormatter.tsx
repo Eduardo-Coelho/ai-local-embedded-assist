@@ -1,12 +1,14 @@
-import { ModelResponse } from "../types";
+import { ModelResponse } from '../types';
 
-export function renderFormattedResponse(response: ModelResponse): JSX.Element[] {
+export function renderFormattedResponse(
+  response: ModelResponse,
+): JSX.Element[] {
   // Handle the response structure with text, tokens, and time
   const text = typeof response === 'string' ? response : response.text;
-  
+
   // Split by code block markers and process each part
   return text.split(/(\[CODE_BLOCK_\d+\])/).map((part, index) => {
-    if (part.startsWith("[CODE_BLOCK_")) {
+    if (part.startsWith('[CODE_BLOCK_')) {
       // Extract the code block number
       const blockMatch = part.match(/\[CODE_BLOCK_(\d+)\]/);
       if (blockMatch) {
@@ -25,7 +27,7 @@ export function renderFormattedResponse(response: ModelResponse): JSX.Element[] 
         );
       }
     }
-    
+
     // Handle regular text with line breaks and clickable links
     return (
       <span key={index} className="text-content">
@@ -45,7 +47,7 @@ function renderTextWithLinks(text: string): JSX.Element[] {
   // URL regex pattern to match various types of URLs
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
-  
+
   return parts.map((part, index) => {
     if (urlRegex.test(part)) {
       return (
@@ -70,11 +72,13 @@ function renderTextWithLinks(text: string): JSX.Element[] {
 }
 
 // Alternative function for more advanced code formatting
-export function renderFormattedResponseWithSyntaxHighlighting(response: ModelResponse): JSX.Element[] {
+export function renderFormattedResponseWithSyntaxHighlighting(
+  response: ModelResponse,
+): JSX.Element[] {
   const text = typeof response === 'string' ? response : response.text;
-  
+
   return text.split(/(\[CODE_BLOCK_\d+\])/).map((part, index) => {
-    if (part.startsWith("[CODE_BLOCK_")) {
+    if (part.startsWith('[CODE_BLOCK_')) {
       const blockMatch = part.match(/\[CODE_BLOCK_(\d+)\]/);
       if (blockMatch) {
         const blockNumber = blockMatch[1];
@@ -97,7 +101,7 @@ export function renderFormattedResponseWithSyntaxHighlighting(response: ModelRes
         );
       }
     }
-    
+
     // Handle regular text with proper formatting and clickable links
     return (
       <div key={index} className="text-content">
@@ -114,7 +118,7 @@ export function renderFormattedResponseWithSyntaxHighlighting(response: ModelRes
               </div>
             );
           }
-          
+
           // Handle bullet points
           if (line.trim().startsWith('-') || line.trim().startsWith('•')) {
             return (
@@ -126,11 +130,12 @@ export function renderFormattedResponseWithSyntaxHighlighting(response: ModelRes
               </div>
             );
           }
-          
+
           // Regular text with clickable links
           return (
             <div key={lineIndex} className="text-line">
-              {line ? renderTextWithLinks(line) : '\u00A0'} {/* Use non-breaking space for empty lines */}
+              {line ? renderTextWithLinks(line) : '\u00A0'}{' '}
+              {/* Use non-breaking space for empty lines */}
             </div>
           );
         })}

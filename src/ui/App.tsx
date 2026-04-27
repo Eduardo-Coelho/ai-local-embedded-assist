@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import "./App.css";
-import { httpMLService } from "./services/HTTPMLService";
-import { Sidebar } from "./components/Sidebar";
-import { ChatContainer } from "./components/ChatContainer";
+import './App.css';
+import { useState, useEffect } from 'react';
+import { httpMLService } from './services/HTTPMLService';
+import { Sidebar } from './components/Sidebar';
+import { ChatContainer } from './components/ChatContainer';
 
 interface AppInfo {
   name: string;
@@ -16,10 +16,10 @@ interface ModelInfo {
 }
 
 function App() {
-  const [appInfo, setAppInfo] = useState<AppInfo>({ name: "", version: "" });
+  const [appInfo, setAppInfo] = useState<AppInfo>({ name: '', version: '' });
   const [modelInfo, setModelInfo] = useState<ModelInfo>({
-    name: "",
-    size: "",
+    name: '',
+    size: '',
     loaded: false,
   });
   const [isLoadingModel, setIsLoadingModel] = useState(false);
@@ -34,8 +34,8 @@ function App() {
         const version = await windowVar?.electronAPI.getAppVersion();
         setAppInfo({ name, version });
       } catch (error) {
-        console.error("Failed to get app info:", error);
-        setAppInfo({ name: "AI Local Embedded Assistant", version: "1.0.0" });
+        console.error('Failed to get app info:', error);
+        setAppInfo({ name: 'AI Local Embedded Assistant', version: '1.0.0' });
       }
     };
     getAppInfo();
@@ -51,9 +51,9 @@ function App() {
       setModelInfo(info);
       setUsingFallback(false);
 
-      console.log("ML model initialized successfully via HTTP");
+      console.log('ML model initialized successfully via HTTP');
     } catch (error) {
-      console.error("Failed to initialize ML model:", error);
+      console.error('Failed to initialize ML model:', error);
     } finally {
       setIsLoadingModel(false);
     }
@@ -68,16 +68,16 @@ function App() {
         </div>
         <div className="status-indicator">
           <span
-            className={`status-dot ${modelInfo.loaded ? "online" : "offline"}`}
+            className={`status-dot ${modelInfo.loaded ? 'online' : 'offline'}`}
           ></span>
           <span>
             {modelInfo.loaded
               ? usingFallback
-                ? "Simple AI Ready"
-                : "ML Model Ready"
+                ? 'Simple AI Ready'
+                : 'ML Model Ready'
               : isLoadingModel
-              ? "Loading Model..."
-              : "Model Not Loaded"}
+                ? 'Loading Model...'
+                : 'Model Not Loaded'}
           </span>
         </div>
       </header>
