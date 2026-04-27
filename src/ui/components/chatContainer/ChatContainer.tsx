@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { httpMLService } from '../../services/HTTPMLService';
 import { renderFormattedResponseWithSyntaxHighlighting } from '../../utils/ResponseFormatter';
-import { ModelInfo, ModelResponse } from '../../types';
+import { AIServiceInit, AIModelInfo, AIModelResponse } from '../../services';
 
 interface ChatContainerProps {
   modelProgress: number;
   isLoadingModel: boolean;
   usingFallback: boolean;
-  modelInfo: ModelInfo;
+  modelInfo: AIModelInfo;
 }
 
 export const ChatContainer = ({
@@ -19,7 +18,7 @@ export const ChatContainer = ({
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [formattedResponse, setFormattedResponse] =
-    useState<ModelResponse | null>(null);
+    useState<AIModelResponse | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +29,7 @@ export const ChatContainer = ({
 
     try {
       console.log('inputText:', inputText);
-      const result = await httpMLService.generateResponse(inputText, 1024); // Increased from 256
+      const result = await AIServiceInit.generateResponse(inputText, 1024); // Increased from 256
       console.log('result:', result);
 
       // Add validation for the response

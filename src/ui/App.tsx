@@ -1,8 +1,7 @@
 import './App.css';
 import { useState, useEffect } from 'react';
-import { httpMLService } from './services/HTTPMLService';
-import { Sidebar } from './components/Sidebar';
-import { ChatContainer } from './components/ChatContainer';
+import { ChatContainer, Sidebar } from './components';
+import { AIServiceInit } from './services';
 
 interface AppInfo {
   name: string;
@@ -46,8 +45,8 @@ function App() {
     try {
       setIsLoadingModel(true);
       setModelProgress(0);
-      await httpMLService.loadModel();
-      const info = await httpMLService.getModelInfo();
+      await AIServiceInit.loadModel();
+      const info = await AIServiceInit.getModelInfo();
       setModelInfo(info);
       setUsingFallback(false);
 

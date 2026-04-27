@@ -1,10 +1,10 @@
-import { ModelInfo, ModelResponse } from '../types';
+import { AIModelInfo, AIModelResponse } from './AIServiceResponse';
 
-export class HTTPMLService {
+export class AIService {
   private serverUrl = 'http://127.0.0.1:8000';
   private isLoaded = false;
   private isLoading = false;
-  private currentModelInfo: ModelInfo | null = null;
+  private currentModelInfo: AIModelInfo | null = null;
 
   constructor() {
     // Check if server is already running on startup
@@ -98,7 +98,7 @@ export class HTTPMLService {
   async generateResponse(
     prompt: string,
     maxLength: number = 1024,
-  ): Promise<ModelResponse> {
+  ): Promise<AIModelResponse> {
     if (!this.isLoaded) {
       throw new Error('Model not loaded. Call loadModel() first.');
     }
@@ -156,7 +156,7 @@ export class HTTPMLService {
     }
   }
 
-  async getModelInfo(): Promise<ModelInfo> {
+  async getModelInfo(): Promise<AIModelInfo> {
     if (this.currentModelInfo) {
       return this.currentModelInfo;
     }
@@ -185,5 +185,4 @@ export class HTTPMLService {
   }
 }
 
-// Create a singleton instance
-export const httpMLService = new HTTPMLService();
+export const AIServiceInit = new AIService();
