@@ -25,13 +25,21 @@ A modern Electron application built with React and TypeScript that provides a lo
    npm install
    ```
 
-2. **Install Python dependencies**
+2. **if on Windows, Install Python dependencies**
 
    ```bash
    npm run install-python-deps
    ```
 
-3. **Start development server**
+3. **if on linux, Python dependencies using Virtual Environments (Recommended)**
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+4. **Start development server**
    ```bash
    npm run dev
    ```
